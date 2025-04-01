@@ -1,0 +1,93 @@
+(This code already reads an Excel file with potentially multi-level column headers, flattens the columns, and produces a single-level column DataFrame.)
+
+Extended Task:
+
+Enhance the existing flattening logic to also handle multi-level row indexes (i.e., if the DataFrame’s index is multi-level, flatten that into a single column or set of columns).
+
+Insert the resulting data into a configured database table, with robust handling:
+
+Table creation or existence check
+
+Handling of conflicts or duplicates (upsert logic or simple inserts)
+
+Transaction handling or commit/rollback
+
+Logging (including success/failure)
+
+The final code must include:
+
+Import statements for DB connectivity (e.g., psycopg2 or sqlalchemy), logging, Pandas, etc.
+
+A main function or usage example (e.g., if __name__ == "__main__":) demonstrating how to call the script with command-line arguments:
+
+--file_path
+
+--sheet_name
+
+--header_rows
+
+--skiprows
+
+--prefix_sep
+
+--index_levels_to_flatten
+
+--db_host, --db_port, --db_name, --db_user, --db_password, --db_table_name
+
+Possibly --create_table or --truncate_table
+
+Thorough docstrings and minimal inline comments explaining how the multi-level row index flattening is done, and how the insertion logic works.
+
+Production-oriented best practices, such as:
+
+Proper exception handling
+
+Logging
+
+Avoiding SQL injection (using parameterized queries or SQLAlchemy)
+
+Possibly configurable schema inference for creating the DB table dynamically
+
+Quality Standards:
+
+Must comply with Python 3 best practices.
+
+Reusable and maintainable structure.
+
+Thorough docstrings and usage examples.
+
+Clean code style (meaningful variable names, minimal magic numbers).
+
+Production-oriented error handling (try/except blocks, logging, transaction management).
+
+Output: Generate a single, self-contained Python script that:
+
+Uses the existing code as a base for flattening multi-level columns.
+
+Extends it to handle flattening multi-level row indexes.
+
+Inserts (or upserts) the resulting DataFrame into a database table under configurable settings.
+
+The script should not be minimal or “toy” — it must be truly industrial-grade so it can be dropped into a real ETL pipeline with minimal changes.
+
+yaml
+Copier
+Modifier
+
+---
+
+### How to Use This Prompt
+
+1. **Copy** this entire text (including the triple backticks and the full code snippet).
+2. **Paste** it into your Large Language Model environment (e.g., a GPT-4 session).
+3. The model should produce a complete script with:
+   - The original flattening logic extended for multi-level row indexes,
+   - Database connectivity and insertion (with robust error handling and logging),
+   - Configurable arguments to handle various scenarios.
+
+Once generated, **review and refine** the script to match your exact environment (e.g., DB credentials, upsert logic) before integrating it into your production pipeline.
+
+
+
+
+
