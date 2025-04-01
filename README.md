@@ -80,3 +80,32 @@ CREATE TABLE fund_limits (
     method TEXT,
     created_at TIMESTAMP DEFAULT CURRENT_TIMESTAMP
 );
+
+
+How to Use
+Save this script as flatten_excel_columns.py.
+
+Install required dependencies (e.g. pandas, openpyxl):
+
+bash
+Copier
+Modifier
+pip install pandas openpyxl
+Run the script from the command line:
+
+bash
+Copier
+Modifier
+python flatten_excel_columns.py --file_path your_data.xlsx --sheet_name 0 \
+    --header_rows 0,1 --skiprows 2 --prefix_sep "_"
+--file_path is mandatory
+
+--sheet_name defaults to the first sheet (0). You can pass "Sheet1" if you prefer name.
+
+--header_rows can be e.g. 0,1 for a 2-row header, or just 0 if single-row.
+
+--skiprows can be used to skip rows before the header.
+
+--prefix_sep sets the string used to join multi-level column parts.
+
+This script returns a flattened Pandas DataFrame you can further process. For a real production pipeline, you might store the DataFrame to a database, CSV, or integrate into an ETL flow.
