@@ -89,127 +89,16 @@ Once generated, **review and refine** the script to match your exact environment
 
 
 
-c87a7-20668
+Identified `path\RISKENGINE` as project root containing a .git directory.
+Using configuration from project root.
+line_length: 88
+target_version: ['py311']
+skip_string_normalization: False
+Traceback (most recent call last):
 
-repos:
-  # Code Formatter
-  - repo: https://github.com/psf/black
-    rev: 24.3.0
-    hooks:
-      - id: black
-
-  # Linting, upgrades, typing
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.3.0
-    hooks:
-      - id: ruff
-
-  # Import Sorting
-  - repo: https://github.com/pre-commit/mirrors-isort
-    rev: v5.13.2
-    hooks:
-      - id: isort
-
-  # Security checks for Python
-  - repo: https://github.com/PyCQA/bandit
-    rev: 1.7.6
-    hooks:
-      - id: bandit
-        args: ["-r", "."]
-
-  # Secret detection
-  - repo: https://github.com/Yelp/detect-secrets
-    rev: v1.4.0
-    hooks:
-      - id: detect-secrets
-
-  # General file hygiene and best practices
-  - repo: https://github.com/pre-commit/pre-commit-hooks
-    rev: v4.5.0
-    hooks:
-      - id: trailing-whitespace
-      - id: end-of-file-fixer
-      - id: check-yaml
-      - id: check-json
-      - id: check-merge-conflict
-      - id: check-added-large-files
-      - id: debug-statements
-
-  # Poetry lockfile consistency
-  - repo: https://github.com/sdispater/poetry
-    rev: 1.7.1
-    hooks:
-      - id: poetry-check
-        name: "Poetry Check"
-        entry: poetry check
-        language: system
-        types: [toml]
-
-  # Alembic migration sanity check (custom hook placeholder)
-  - repo: local
-    hooks:
-      - id: alembic-check
-        name: "Alembic Heads Check"
-        entry: bash -c 'alembic heads && alembic branches'
-        language: system
-        pass_filenames: false
-        always_run: true
-
-  - repo: local
-    hooks:
-      - id: pytest
-        name: Run pytest
-        entry: poetry run pytest
-        language: system
-        pass_filenames: false
-
-
-[tool.black]
-line-length = 88
-target-version = ["py311"]
-skip-string-normalization = false
-
-[tool.isort]
-profile = "black"
-line_length = 88
-multi_line_output = 3
-include_trailing_comma = true
-known_first_party = ["your_package_name"]  # replace with your module/package name
-combine_as_imports = true
-
-[tool.ruff]
-line-length = 88
-target-version = "py311"
-select = ["E", "F", "I", "B", "UP", "C90", "SIM", "PL", "RUF"]
-ignore = ["E501"]  # let Black handle line length
-fix = true
-
-[tool.ruff.lint]
-extend-select = ["TID", "Q", "ARG", "PD", "NPY"]
-
-[tool.ruff.format]
-quote-style = "double"
-indent-style = "space"
-line-ending = "lf"
-
-[tool.ruff.isort]
-known-first-party = ["your_package_name"]
-combine-as-imports = true
-
-  # Linting, upgrades, typing
-  - repo: https://github.com/astral-sh/ruff-pre-commit
-    rev: v0.11.4
-    hooks:
-      - id: ruff
-        args: ["src", "test"]
-        exclude: '__init__\.py$'
-
-
-- repo: https://github.com/astral-sh/ruff-pre-commit
-  rev: v0.11.4
-  hooks:
-    - id: ruff
-      files: ^(test|sec)/  # Only include files in test/ or sec/
-      exclude: __init__\.py$  # Exclude __init__.py files
+  File "C:\Program Files\Python310\lib\codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+(riskengine-py3.10) PS C:\Users\omarnissi\PycharmProjects\RISKENGINE> 
 
 
