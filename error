@@ -11,94 +11,191 @@ variables:
   - group: RISKENGINE_SECRET
   - name: VENV_DIR
     value: $(Pipeline.Workspace)/.venv
+  - name: DB_DRIVER
+    value: ODBC+Driver+17+for+SQL+Server
 
-steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.10'
-      addToPath: true
+######################
+# STAGE 1 - LINTING & CODE QUALITY
+######################
+stages:
+  - stage: quality
+    displayName: Formatting & Code Quality
+    jobs:
+      - job: lint
+        displayName: Lint & Security Checks
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.10'
 
-  - script: |
-      curl -sSL https://install.python-poetry.org | python3 -
-      echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    displayName: Install Poetry
+          - script: |
+              curl -sSL https://install.python-poetry.org | python3 -
+            displayName: Install Poetry
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry config virtualenvs.in-project true
-      poetry install --with dev
-    displayName: Install Dependencies
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry config virtualenvs.in-project true
+              poetry install --with dev
+            displayName: Install Dependencies
 
-  - script: |
-      docker network create sqlnet
-    displayName: Create shared Docker network
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry check
+            displayName: Poetry Check
 
-  - script: |
-      docker run -e "ACCEPT_EULA=Y" \
-                 -e "SA_PASSWORD=${DB_PASS}" \
-                 --network sqlnet \
-                 --name sqltest \
-                 -p 1433:1433 \
-                 -d mcr.microsoft.com/mssql/server:2019-latest
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry run black --check --diff .
+            displayName: Check Code Format with Black
 
-      echo "Waiting for SQL Server to accept TCP connections..."
-      for i in {1..30}; do
-        nc -z localhost 1433 && echo "SQL Server ready" && break
-        echo "Still waiting... ($i)"
-        sleep 2
-      done
-    displayName: Start SQL Server
-    env:
-      DB_PASS: $(DB_PASS)
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry run ruff check .
+            displayName: Lint with Ruff
 
-  - script: |
-      chmod 644 $(Build.SourcesDirectory)/init.sql
-      docker run --rm \
-        --network sqlnet \
-        -v $(Build.SourcesDirectory)/init.sql:/init.sql \
-        mcr.microsoft.com/mssql-tools \
-        /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S sqltest -U sa -P ${DB_PASS} -i /init.sql"
-    displayName: Run init.sql against SQL Server
-    env:
-      DB_PASS: $(DB_PASS)
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry run bandit -r . -c bandit.yaml --exit-zero --quiet
+            displayName: Bandit Security Scan
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry check
-    displayName: Poetry Check
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry run detect-secrets scan src test > tmp.secrets.baseline
+              grep '"is_secret": true' tmp.secrets.baseline && echo "Secrets found!" && exit 1 || echo "No secrets detected."
+            displayName: Secret Scan (src & test)
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run black --check --diff .
-    displayName: Check Code Format with Black
+######################
+# STAGE 2 - SONARQUBE
+######################
+  - stage: sonarqube
+    displayName: SonarQube Analysis
+    dependsOn: quality
+    condition: succeeded()
+    jobs:
+      - job: analysis
+        displayName: Run SonarQube Scan
+        steps:
+          - task: SonarQubePrepare@5
+            inputs:
+              SonarQube: 'YourSonarQubeServiceConnection'
+              scannerMode: 'CLI'
+              configMode: 'manual'
+              cliProjectKey: 'riskengine'
+              cliProjectName: 'riskengine'
+              cliSources: '.'
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run ruff check .
-    displayName: Lint with Ruff
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry install --with dev
+              sonar-scanner
+            displayName: Run Sonar Scanner
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run bandit -r . -c bandit.yaml --exit-zero --quiet
-    displayName: Bandit Security Scan
+          - task: SonarQubePublish@5
+            inputs:
+              pollingTimeoutSec: '300'
 
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run detect-secrets scan src test > tmp.secrets.baseline
-      grep '"is_secret": true' tmp.secrets.baseline && echo "Secrets found!" && exit 1 || echo "No secrets detected."
-    displayName: Secret Scan (src & test)
+######################
+# STAGE 3 - UNIT TESTS
+######################
+  - stage: unit
+    displayName: Unit Tests
+    dependsOn: sonarqube
+    condition: succeeded()
+    jobs:
+      - job: unit_tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.10'
 
-  - script: |
-      set -e  # Fail fast if any command fails
-      export PATH="$HOME/.local/bin:$PATH"
-      export DATABASE_URL="mssql+pyodbc://${DB_USER}:${DB_PASS}@${DB_HOST}:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}"
-      echo "Using DATABASE_URL: mssql+pyodbc://${DB_USER}:****@${DB_HOST}:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}"
-      poetry run pytest -m integration || echo "No integration tests found"
-    displayName: Run Integration Tests
-    env:
-      DB_USER: $(DB_USER)
-      DB_PASS: $(DB_PASS)
-      DB_HOST: $(DB_HOST)
-      DB_PORT: $(DB_PORT)
-      DB_NAME: $(DB_NAME)
-      DB_DRIVER: $(DB_DRIVER)
+          - script: |
+              curl -sSL https://install.python-poetry.org | python3 -
+            displayName: Install Poetry
+
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry config virtualenvs.in-project true
+              poetry install --with dev
+              poetry run pytest -m "not integration" --maxfail=1 --disable-warnings -q || CODE=$?
+              if [ "$CODE" = "5" ]; then
+                echo "No unit tests found."
+                exit 0
+              else
+                exit $CODE
+              fi
+            displayName: Run Unit Tests
+
+######################
+# STAGE 4 - INTEGRATION TESTS
+######################
+  - stage: integration
+    displayName: Integration Tests
+    dependsOn: unit
+    condition: succeeded()
+    jobs:
+      - job: integration_tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.10'
+
+          - script: |
+              curl -sSL https://install.python-poetry.org | python3 -
+            displayName: Install Poetry
+
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry config virtualenvs.in-project true
+              poetry install --with dev
+            displayName: Install Dependencies
+
+          - script: |
+              docker network create sqlnet
+            displayName: Create Docker Network
+
+          - script: |
+              docker run -e "ACCEPT_EULA=Y" \
+                         -e "SA_PASSWORD=${DB_PASS}" \
+                         --network sqlnet \
+                         --name sqltest \
+                         -p 1433:1433 \
+                         -d mcr.microsoft.com/mssql/server:2019-latest
+
+              echo "Waiting for SQL Server..."
+              for i in {1..30}; do
+                timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' && echo "SQL Server ready" && break
+                echo "Still waiting... ($i)"
+                sleep 2
+              done
+            displayName: Start SQL Server
+            env:
+              DB_PASS: $(DB_PASS)
+
+          - script: |
+              chmod 644 $(Build.SourcesDirectory)/init.sql
+              docker run --rm \
+                --network sqlnet \
+                -v $(Build.SourcesDirectory)/init.sql:/init.sql \
+                mcr.microsoft.com/mssql-tools \
+                /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S sqltest -U sa -P ${DB_PASS} -i /init.sql"
+            displayName: Run SQL Init Script
+            env:
+              DB_PASS: $(DB_PASS)
+
+          - script: |
+              export DATABASE_URL="mssql+pyodbc://${DB_USER}:${DB_PASS}@localhost:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}"
+              poetry run pytest -m integration --maxfail=1 -q || CODE=$?
+              if [ "$CODE" = "5" ]; then
+                echo "No integration tests found."
+                exit 0
+              else
+                exit $CODE
+              fi
+            displayName: Run Integration Tests
+            env:
+              DB_USER: $(DB_USER)
+              DB_PASS: $(DB_PASS)
+              DB_HOST: localhost
+              DB_PORT: 1433
+              DB_NAME: tempdb
+              DB_DRIVER: $(DB_DRIVER)
