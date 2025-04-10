@@ -1,16 +1,18 @@
 - script: |
-    docker run -e "ACCEPT_EULA=Y" \
-               -e "SA_PASSWORD=${DB_PASS}" \
-               -p 1433:1433 \
-               --name sqltest \
-               -d mcr.microsoft.com/mssql/server:2019-latest
+    # Copy the .sql file into the pipeline workspace
+    cp ./init.sql $(Pipeline.Workspace)/init.sql
 
-    echo "Waiting for SQL Server (TCP check)..."
-
-    for i in {1..30}; do
-      timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' && echo "SQL Server ready" && break
-      echo "Still waiting... ($i)"
-      sleep 2
-    done
+    # Run a container with sqlcmd to connect and run the script
+    docker run --rm -v $(Pipeline.Workspace)/init.sql:/init.sql \
+      mcr.microsoft.com/mssql-tools \
+      /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S host.docker.internal -U sa -P ${DB_PASS} -i /init.sql"
+  displayName: Run init.sql via sqlcmd
   env:
     DB_PASS: $(DB_PASS)
+
+CREATE TABLE test_table (
+    id INT PRIMARY KEY,
+    name NVARCHAR(100)
+);
+
+INSERT INTO test_table (id, name) VALUES (1, 'Alice'), (2, 'Bob');
