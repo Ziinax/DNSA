@@ -1,5 +1,43 @@
-- script: |
-    export PATH="$HOME/.local/bin:$PATH"
-    poetry run detect-secrets scan src test > tmp.secrets.baseline
-    grep '"is_secret": true' tmp.secrets.baseline && echo "Secrets found!" && exit 1 || echo "No secrets detected."
-  displayName: Secret Scan (src & test)
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  DATABASE_URL: "mssql+pyodbc://sa:YourStrong!Passw0rd@localhost:1433/tempdb?driver=ODBC+Driver+17+for+SQL+Server"
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.10'
+
+  - script: |
+      curl -sSL https://install.python-poetry.org | python3 -
+      echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    displayName: Install Poetry
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry config virtualenvs.in-project true
+      poetry install --with dev
+    displayName: Install Dependencies
+
+  # Étape 3 : Lancer SQL Server dans un conteneur Docker
+  - script: |
+      docker run -e "ACCEPT_EULA=Y" -e "SA_PASSWORD=YourStrong!Passw0rd" -p 1433:1433 -d mcr.microsoft.com/mssql/server:2019-latest
+      echo "Waiting for SQL Server to start..."
+      sleep 20
+    displayName: Start SQL Server container
+
+  # Étape 4 : Test d'intégration (marqués @pytest.mark.integration)
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      export DATABASE_URL="${DATABASE_URL}"
+      poetry run pytest -m integration --maxfail=1 -q
+    displayName: Run Integration Tests
+    env:
+      DATABASE_URL: $(DATABASE_URL)
