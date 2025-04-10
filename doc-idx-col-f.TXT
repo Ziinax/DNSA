@@ -197,5 +197,16 @@ known-first-party = ["your_package_name"]
 combine-as-imports = true
 
 
+      RuntimeError: The Poetry configuration is invalid:
+        - tool.poetry.extras.pipfile_deprecated_finder[2] must match pattern ^[a-zA-Z-_.0-9]+$
+
+      [end of output]
+
+      note: This error originates from a subprocess, and is likely not a problem with pip.
+    error: metadata-generation-failed
+
+    Encountered error while generating package metadata.
+
+
 
 
