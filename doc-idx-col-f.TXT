@@ -197,15 +197,15 @@ known-first-party = ["your_package_name"]
 combine-as-imports = true
 
 
-      RuntimeError: The Poetry configuration is invalid:
-        - tool.poetry.extras.pipfile_deprecated_finder[2] must match pattern ^[a-zA-Z-_.0-9]+$
-
-      [end of output]
-
-      note: This error originates from a subprocess, and is likely not a problem with pip.
-    error: metadata-generation-failed
-
-    Encountered error while generating package metadata.
+     Traceback (most recent call last):
+  File "path\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "path0\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "path\Scripts\bandit.exe\__main__.py", line 7, in <module>
+  File "path\lib\site-packages\bandit\cli\main.py", line 677, in main
+    conf_level = constants.RANKING[args.confidence - 1]
+TypeError: unsupported operand type(s) for -: 'str' and 'int'
 
 
 
