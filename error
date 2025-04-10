@@ -103,3 +103,54 @@ unable to get image 'riskengine-test': error during connect: in the default daem
           displayName: Patch version and commit
 
 
+poetry self add poetry-dynamic-versioning
+
+[tool.dynamic-versioning]
+enable = true
+style = "pep440"
+pattern = "v(?P<base>\\d+\\.\\d+\\.\\d+)"
+
+git tag v1.2.3
+git push origin v1.2.3
+
+- stage: build_package
+  displayName: Build with Dynamic Version
+  dependsOn: integration
+  condition: succeeded()
+  jobs:
+    - job: build
+      displayName: Build Python package
+      pool:
+        vmImage: ubuntu-latest
+      steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.10'
+
+        - checkout: self
+          fetchDepth: 0  # IMPORTANT: Ensures Git tags are available
+
+        - script: |
+            curl -sSL https://install.python-poetry.org | python3 -
+            echo "export PATH=$HOME/.local/bin:$PATH" >> $BASH_ENV
+          displayName: Install Poetry
+
+        - script: |
+            export PATH="$HOME/.local/bin:$PATH"
+            poetry self add poetry-dynamic-versioning
+            poetry install --no-root
+          displayName: Install Dependencies and Dynamic Versioning Plugin
+
+        - script: |
+            export PATH="$HOME/.local/bin:$PATH"
+            echo "Git version tag detected: $(git describe --tags)"
+            echo "Poetry resolved version: $(poetry version -s)"
+            poetry build
+          displayName: Build Project with Dynamic Version
+
+        - publish: $(Build.SourcesDirectory)/dist
+          artifact: python-package
+          displayName: Publish Build Artifacts
+
+
+
