@@ -1,0 +1,26 @@
+black src/riskengine/models
+Traceback (most recent call last):
+  File "C:\Program Files\Python310\lib\runpy.py", line 196, in _run_module_as_main
+    return _run_code(code, main_globals, None,
+  File "C:\Program Files\Python310\lib\runpy.py", line 86, in _run_code
+    exec(code, run_globals)
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\Scripts\black.exe\__main__.py", line 7, in <module>
+  File "src\black\__init__.py", line 1592, in patched_main
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1161, in __call__
+    return self.main(*args, **kwargs)
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1082, in main
+    rv = self.invoke(ctx)
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1443, in invoke
+    return ctx.invoke(self.callback, **ctx.params)
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 788, in invoke
+    return __callback(*args, **kwargs)
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\decorators.py", line 33, in new_func
+    return f(get_current_context(), *args, **kwargs)
+  File "src\black\__init__.py", line 671, in main
+  File "src\black\__init__.py", line 747, in get_sources
+  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\black\files.py", line 247, in get_gitignore
+    lines = gf.readlines()
+  File "C:\Program Files\Python310\lib\codecs.py", line 322, in decode
+    (result, consumed) = self._buffer_decode(data, self.errors, final)
+UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
+(riskengine-py3.10) PS C:\Users\omarnissi\PycharmProjects\RISKENGINE> 
