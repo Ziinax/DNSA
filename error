@@ -72,3 +72,34 @@ unable to get image 'riskengine-test': error during connect: in the default daem
               sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
             displayName: Install ODBC Driver for SQL Server
 
+
+- stage: version_patch
+  displayName: Bump Version Patch (Poetry)
+  dependsOn: integration
+  condition: succeeded()
+  jobs:
+    - job: patch
+      displayName: Bump Patch Version with Poetry
+      steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.10'
+
+        - script: |
+            curl -sSL https://install.python-poetry.org | python3 -
+          displayName: Install Poetry
+
+        - script: |
+            git config --global user.name "CI Bot"
+            git config --global user.email "ci@yourdomain.com"
+
+            export PATH="$HOME/.local/bin:$PATH"
+            poetry version patch
+            echo "📦 Bumped version to $(poetry version -s)"
+
+            git add pyproject.toml
+            git commit -m "ci: bump patch version to $(poetry version -s)"
+            git push origin HEAD:$(Build.SourceBranchName)
+          displayName: Patch version and commit
+
+
