@@ -1,24 +1,6 @@
-self = <sqlalchemy.dialects.mssql.pyodbc.MSDialect_pyodbc object at 0x7f9913aaf0d0>
-cargs = ('DRIVER={ODBC Driver 17 for SQL Server};Server=***,***;Database=***;UID=***;PWD=***',)
-cparams = {}
-
-    def connect(self, *cargs: Any, **cparams: Any) -> DBAPIConnection:
-        # inherits the docstring from interfaces.Dialect.connect
->       return self.loaded_dbapi.connect(*cargs, **cparams)  # type: ignore[no-any-return]  # NOQA: E501
-E       sqlalchemy.exc.DBAPIError: (pyodbc.Error) ('01000', "[01000] [unixODBC][Driver Manager]Can't open lib 'ODBC Driver 17 for SQL Server' : file not found (0) (SQLDriverConnect)")
-E       (Background on this error at: https://sqlalche.me/e/20/dbapi)
-
-.venv/lib/python3.10/site-packages/sqlalchemy/engine/default.py:625: DBAPIError
----------------------------- Captured stderr setup -----------------------------
-2025-04-10 21:18:22,044 - riskengine - ERROR - Échec du test de connexion à la base de données : (pyodbc.Error) ('01000', "[01000] [unixODBC][Driver Manager]Can't open lib 'ODBC Driver 17 for SQL Server' : file not found (0) (SQLDriverConnect)")
-(Background on this error at: https://sqlalche.me/e/20/dbapi)
-2025-04-10 21:18:22,044 - riskengine - ERROR - Erreur lors de l'initiali***tion de la base de données : (pyodbc.Error) ('01000', "[01000] [unixODBC][Driver Manager]Can't open lib 'ODBC Driver 17 for SQL Server' : file not found (0) (SQLDriverConnect)")
-(Background on this error at: https://sqlalche.me/e/20/dbapi)
------------------------------- Captured log setup ------------------------------
-ERROR    riskengine:database.py:55 Échec du test de connexion à la base de données : (pyodbc.Error) ('01000', "[01000] [unixODBC][Driver Manager]Can't open lib 'ODBC Driver 17 for SQL Server' : file not found (0) (SQLDriverConnect)")
-(Background on this error at: https://sqlalche.me/e/20/dbapi)
-ERROR    riskengine:database.py:45 Erreur lors de l'initiali***tion de la base de données : (pyodbc.Error) ('01000', "[01000] [unixODBC][Driver Manager]Can't open lib 'ODBC Driver 17 for SQL Server' : file not found (0) (SQLDriverConnect)")
-(Background on this error at: https://sqlalche.me/e/20/dbapi)
-=========================== short test summary info ============================
-ERROR test/src/repositories/test_database.py::test_database_connection - sqla...
-!!!!!!!!!!!!!!!!!!!!!!!!!! stopping after 1 failures !!!!!!!!!!!!!!!!!!!!!!!!!!!
+- script: |
+              curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
+              curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
+              sudo apt-get update
+              sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
+            displayName: Install ODBC Driver for SQL Server
