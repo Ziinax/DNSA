@@ -1,6 +1,59 @@
-- script: |
-              curl https://packages.microsoft.com/keys/microsoft.asc | sudo apt-key add -
-              curl https://packages.microsoft.com/config/ubuntu/20.04/prod.list | sudo tee /etc/apt/sources.list.d/mssql-release.list
-              sudo apt-get update
-              sudo ACCEPT_EULA=Y apt-get install -y msodbcsql17 unixodbc-dev
-            displayName: Install ODBC Driver for SQL Server
+# Dockerfile.test
+FROM python:3.10-slim
+
+RUN apt-get update && \
+    apt-get install -y curl gnupg apt-transport-https unixodbc-dev gcc g++ && \
+    curl https://packages.microsoft.com/keys/microsoft.asc | apt-key add - && \
+    curl https://packages.microsoft.com/config/debian/10/prod.list > /etc/apt/sources.list.d/mssql-release.list && \
+    apt-get update && \
+    ACCEPT_EULA=Y apt-get install -y msodbcsql17 mssql-tools && \
+    apt-get clean
+
+ENV PATH="/root/.local/bin:$PATH"
+
+# Install Poetry
+RUN curl -sSL https://install.python-poetry.org | python3 -
+
+WORKDIR /app
+
+# Copy project files
+COPY pyproject.toml poetry.lock ./
+RUN poetry config virtualenvs.create false && poetry install --with dev
+
+# Copy app & tests & init.sql
+COPY . .
+
+# Entrypoint will run init.sql and then tests
+CMD /bin/bash -c "\
+  echo 'Running init.sql against SQL Server...' && \
+  /opt/mssql-tools/bin/sqlcmd -S sqlserver -U sa -P YourStrong!Passw0rd -i ./init.sql && \
+  echo 'Running integration tests...' && \
+  pytest -m integration"
+
+
+version: '3.8'
+
+services:
+  sqlserver:
+    image: mcr.microsoft.com/mssql/server:2019-latest
+    container_name: sqltest
+    environment:
+      ACCEPT_EULA: "Y"
+      SA_PASSWORD: "YourStrong!Passw0rd"
+    ports:
+      - "1433:1433"
+    healthcheck:
+      test: ["CMD-SHELL", "/opt/mssql-tools/bin/sqlcmd -S localhost -U sa -P YourStrong!Passw0rd -Q 'SELECT 1'"]
+      interval: 10s
+      timeout: 5s
+      retries: 10
+
+  test:
+    build:
+      context: .
+      dockerfile: Dockerfile.test
+    environment:
+      DATABASE_URL: "mssql+pyodbc://sa:YourStrong!Passw0rd@sqlserver:1433/tempdb?driver=ODBC+Driver+17+for+SQL+Server"
+    depends_on:
+      sqlserver:
+        condition: service_healthy
