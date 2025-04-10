@@ -1,91 +1,28 @@
-
-
-trigger:
-  branches:
-    include:
-      - main
-      - develop
-      - feature/*
-
-pool:
-  vmImage: 'ubuntu-latest'
-
-variables:
-  VENV_DIR: $(Pipeline.Workspace)/.venv
-
-steps:
-  - task: UsePythonVersion@0
-    inputs:
-      versionSpec: '3.10'
-      addToPath: true
-
-  - script: |
-      curl -sSL https://install.python-poetry.org | python3 -
-      echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
-    displayName: Install Poetry
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry config virtualenvs.in-project true
-      poetry install --with dev
-    displayName: Install Dependencies
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry check
-    displayName: Poetry Check
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run black --check --diff .
-    displayName: Check Code Format with Black
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run ruff check .
-    displayName: Lint with Ruff
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run bandit -r . -c .bandit.yaml
-    displayName: Bandit Security Scan
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run detect-secrets scan --all-files > .secrets.baseline
-      poetry run detect-secrets audit --baseline .secrets.baseline --fail-on-found
-    displayName: Scan for Secrets
-
-  - script: |
-      export PATH="$HOME/.local/bin:$PATH"
-      poetry run pytest --maxfail=1 --disable-warnings -q
-    displayName: Run Tests with Pytest
-
-
-
-black src/riskengine/models
-Traceback (most recent call last):
-  File "C:\Program Files\Python310\lib\runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "C:\Program Files\Python310\lib\runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\Scripts\black.exe\__main__.py", line 7, in <module>
-  File "src\black\__init__.py", line 1592, in patched_main
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1161, in __call__
-    return self.main(*args, **kwargs)
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1082, in main
-    rv = self.invoke(ctx)
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 1443, in invoke
-    return ctx.invoke(self.callback, **ctx.params)
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\core.py", line 788, in invoke
-    return __callback(*args, **kwargs)
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\click\decorators.py", line 33, in new_func
-    return f(get_current_context(), *args, **kwargs)
-  File "src\black\__init__.py", line 671, in main
-  File "src\black\__init__.py", line 747, in get_sources
-  File "C:\Users\omarnissi\AppData\Local\pypoetry\Cache\virtualenvs\riskengine-T5snRICg-py3.10\lib\site-packages\black\files.py", line 247, in get_gitignore
-    lines = gf.readlines()
-  File "C:\Program Files\Python310\lib\codecs.py", line 322, in decode
-    (result, consumed) = self._buffer_decode(data, self.errors, final)
-UnicodeDecodeError: 'utf-8' codec can't decode byte 0xff in position 0: invalid start byte
-(riskengine-py3.10) PS C:\Users\omarnissi\PycharmProjects\RISKENGINE> 
+/usr/bin/bash --noprofile --norc /home/vsts/work/_temp/4263bea6-21fb-4759-bdd8-55b5ee4fea85.sh
+[main]	INFO	Found project level .bandit file: ./.bandit
+[main]	INFO	Using command line arg for config file
+[main]	INFO	Using ini file for skipped tests
+[main]	INFO	Using command line arg for selected targets
+[main]	INFO	profile include tests: None
+[main]	INFO	profile exclude tests: None
+[main]	INFO	cli include tests: None
+[main]	INFO	cli exclude tests: B101,B102
+[main]	INFO	using config: bandit.yaml
+[main]	INFO	running on Python 3.10.16
+[manager]	WARNING	Test in comment: _lines is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: is is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: a is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: dict is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: of is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: line is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: number is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: set is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: of is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: tests is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: to is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: ignore is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: tkelsey is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: catching is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: expected is not a test name or id, ignoring
+[manager]	WARNING	Test in comment: exception is not a test name or id, ignoring
+[tester]	WARNING	nosec encountered (B108), but no failed test on line 62
