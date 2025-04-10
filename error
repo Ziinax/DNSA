@@ -1,18 +1,8 @@
-- script: |
-    # Copy the .sql file into the pipeline workspace
-    cp ./init.sql $(Pipeline.Workspace)/init.sql
+2d6e05bfcbd2: Pull complete
+Digest: sha256:62556500522072535cb3df2bb5965333dded9be47000473e9e0f84118e248642
+Status: Downloaded newer image for mcr.microsoft.com/mssql-tools:latest
+Sqlcmd: Error: Microsoft ODBC Driver 13 for SQL Server : Login timeout expired.
+Sqlcmd: Error: Microsoft ODBC Driver 13 for SQL Server : TCP Provider: Error code 0x2AF9.
+Sqlcmd: Error: Microsoft ODBC Driver 13 for SQL Server : A network-related or instance-specific error has occurred while establishing a connection to SQL Server. Server is not found or not accessible. Check if instance name is correct and if SQL Server is configured to allow remote connections. For more information see SQL Server Books Online..
 
-    # Run a container with sqlcmd to connect and run the script
-    docker run --rm -v $(Pipeline.Workspace)/init.sql:/init.sql \
-      mcr.microsoft.com/mssql-tools \
-      /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S host.docker.internal -U sa -P ${DB_PASS} -i /init.sql"
-  displayName: Run init.sql via sqlcmd
-  env:
-    DB_PASS: $(DB_PASS)
-
-CREATE TABLE test_table (
-    id INT PRIMARY KEY,
-    name NVARCHAR(100)
-);
-
-INSERT INTO test_table (id, name) VALUES (1, 'Alice'), (2, 'Bob');
+##[error]Bash exited with code '1'.
