@@ -1,3 +1,68 @@
+
+
+trigger:
+  branches:
+    include:
+      - main
+      - develop
+      - feature/*
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  VENV_DIR: $(Pipeline.Workspace)/.venv
+
+steps:
+  - task: UsePythonVersion@0
+    inputs:
+      versionSpec: '3.10'
+      addToPath: true
+
+  - script: |
+      curl -sSL https://install.python-poetry.org | python3 -
+      echo 'export PATH="$HOME/.local/bin:$PATH"' >> ~/.bashrc
+    displayName: Install Poetry
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry config virtualenvs.in-project true
+      poetry install --with dev
+    displayName: Install Dependencies
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry check
+    displayName: Poetry Check
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry run black --check --diff .
+    displayName: Check Code Format with Black
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry run ruff check .
+    displayName: Lint with Ruff
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry run bandit -r . -c .bandit.yaml
+    displayName: Bandit Security Scan
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry run detect-secrets scan --all-files > .secrets.baseline
+      poetry run detect-secrets audit --baseline .secrets.baseline --fail-on-found
+    displayName: Scan for Secrets
+
+  - script: |
+      export PATH="$HOME/.local/bin:$PATH"
+      poetry run pytest --maxfail=1 --disable-warnings -q
+    displayName: Run Tests with Pytest
+
+
+
 black src/riskengine/models
 Traceback (most recent call last):
   File "C:\Program Files\Python310\lib\runpy.py", line 196, in _run_module_as_main
