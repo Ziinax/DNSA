@@ -205,3 +205,11 @@ combine-as-imports = true
         exclude: '__init__\.py$'
 
 
+- repo: https://github.com/astral-sh/ruff-pre-commit
+  rev: v0.11.4
+  hooks:
+    - id: ruff
+      files: ^(test|sec)/  # Only include files in test/ or sec/
+      exclude: __init__\.py$  # Exclude __init__.py files
+
+
