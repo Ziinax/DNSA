@@ -1,1 +1,16 @@
-OCI runtime exec failed: exec failed: unable to start container process: exec: "/opt/mssql-tools/bin/sqlcmd": stat /opt/mssql-tools/bin/sqlcmd: no such file or directory: unknown
+- script: |
+    docker run -e "ACCEPT_EULA=Y" \
+               -e "SA_PASSWORD=${DB_PASS}" \
+               -p 1433:1433 \
+               --name sqltest \
+               -d mcr.microsoft.com/mssql/server:2019-latest
+
+    echo "Waiting for SQL Server (TCP check)..."
+
+    for i in {1..30}; do
+      timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' && echo "SQL Server ready" && break
+      echo "Still waiting... ($i)"
+      sleep 2
+    done
+  env:
+    DB_PASS: $(DB_PASS)
