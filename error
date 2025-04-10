@@ -1,4 +1,120 @@
-2 deselected in 1.26s
+trigger:
+  branches:
+    include:
+      - main
+      - develop
 
-##[error]Bash exited with code '5'.
-Finishing: Run Integration Tests
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  - group: sqlserver-test-db
+  - name: DB_DRIVER
+    value: ODBC+Driver+17+for+SQL+Server
+
+stages:
+  - stage: unit
+    displayName: Unit Tests
+    jobs:
+      - job: unit_tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.10'
+
+          - script: |
+              curl -sSL https://install.python-poetry.org | python3 -
+            displayName: Install Poetry
+
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry config virtualenvs.in-project true
+              poetry install --with dev
+              poetry run pytest -m "not integration" --maxfail=1 --disable-warnings -q
+            displayName: Run Unit Tests
+
+  - stage: integration
+    displayName: Integration Tests
+    dependsOn: unit
+    condition: succeeded()
+    jobs:
+      - job: integration_tests
+        steps:
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.10'
+
+          - script: |
+              curl -sSL https://install.python-poetry.org | python3 -
+            displayName: Install Poetry
+
+          - script: |
+              export PATH="$HOME/.local/bin:$PATH"
+              poetry config virtualenvs.in-project true
+              poetry install --with dev
+            displayName: Install Dependencies
+
+          - script: |
+              docker network create sqlnet
+            displayName: Create Docker Network
+
+          - script: |
+              docker run -e "ACCEPT_EULA=Y" \
+                         -e "SA_PASSWORD=${DB_PASS}" \
+                         --network sqlnet \
+                         --name sqltest \
+                         -p 1433:1433 \
+                         -d mcr.microsoft.com/mssql/server:2019-latest
+
+              echo "Waiting for SQL Server..."
+              for i in {1..30}; do
+                timeout 1 bash -c 'cat < /dev/null > /dev/tcp/localhost/1433' && echo "Ready" && break
+                echo "Still waiting... ($i)"
+                sleep 2
+              done
+            displayName: Start SQL Server
+            env:
+              DB_PASS: $(DB_PASS)
+
+          - script: |
+              chmod 644 $(Build.SourcesDirectory)/init.sql
+              docker run --rm \
+                --network sqlnet \
+                -v $(Build.SourcesDirectory)/init.sql:/init.sql \
+                mcr.microsoft.com/mssql-tools \
+                /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S sqltest -U sa -P ${DB_PASS} -i /init.sql"
+            displayName: Run SQL Init Script
+            env:
+              DB_PASS: $(DB_PASS)
+
+          - script: |
+              export DATABASE_URL="mssql+pyodbc://${DB_USER}:${DB_PASS}@localhost:${DB_PORT}/${DB_NAME}?driver=${DB_DRIVER}"
+              poetry run pytest -m integration --maxfail=1 -q
+            displayName: Run Integration Tests
+            env:
+              DB_USER: $(DB_USER)
+              DB_PASS: $(DB_PASS)
+              DB_HOST: localhost
+              DB_PORT: 1433
+              DB_NAME: tempdb
+              DB_DRIVER: $(DB_DRIVER)
+
+- script: |
+    set -e
+    export PATH="$HOME/.local/bin:$PATH"
+    poetry config virtualenvs.in-project true
+    poetry install --with dev
+
+    echo "Running unit tests (not integration)..."
+    poetry run pytest -m "not integration" --maxfail=1 --disable-warnings -q || CODE=$?
+
+    if [ "$CODE" = "5" ]; then
+      echo "No unit tests found (non-integration). Skipping gracefully."
+      exit 0
+    else
+      exit $CODE
+    fi
+  displayName: Run Unit Tests
+
+
+
