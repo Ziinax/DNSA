@@ -1,42 +1,7 @@
-[manager]	WARNING	Test in comment: expected is not a test name or id, ignoring
-[manager]	WARNING	Test in comment: exception is not a test name or id, ignoring
-[tester]	WARNING	nosec encountered (B108), but no failed test on line 62
-Working... ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━ 100% 0:02:48
-Run started:2025-04-10 13:19:06.840408
+[
 
-Test results:
->> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
-   Severity: Medium   Confidence: Low
-   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
-   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b608_hardcoded_sql_expressions.html
-   Location: ./.venv/lib/python3.10/site-packages/alembic/ddl/mssql.py:318:11
-317	    # working-with-default-constraints-in-sql-server/
-318	    return """declare @const_name varchar(256)
-319	select @const_name = QUOTENAME([name]) from %(type)s
-320	where parent_object_id = object_id('%(schema_dot)s%(tname)s')
-321	and col_name(parent_object_id, parent_column_id) = '%(colname)s'
-322	exec('alter table %(tname_quoted)s drop constraint ' + @const_name)""" % {
-323	        "type": type_,
-324	        "tname": tname,
-325	        "colname": colname,
-326	        "tname_quoted": format_table_name(compiler, tname, schema),
-327	        "schema_dot": schema + "." if schema else "",
-328	    }
-329	
-
---------------------------------------------------
->> Issue: [B608:hardcoded_sql_expressions] Possible SQL injection vector through string-based query construction.
-   Severity: Medium   Confidence: Low
-   CWE: CWE-89 (https://cwe.mitre.org/data/definitions/89.html)
-   More Info: https://bandit.readthedocs.io/en/1.8.3/plugins/b608_hardcoded_sql_expressions.html
-   Location: ./.venv/lib/python3.10/site-packages/alembic/ddl/mssql.py:337:11
-336	
-337	    return """declare @const_name varchar(256)
-338	select @const_name = QUOTENAME([name]) from
-339	sys.foreign_keys fk join sys.foreign_key_columns fkc
-340	on fk.object_id=fkc.constraint_object_id
-341	where fkc.parent_object_id = object_id('%(schema_dot)s%(tname)s')
-342	and col_name(fkc.parent_object_id, fkc.parent_column_id) = '%(colname)s'
-343	exec('alter table %(tname_quoted)s drop constraint ' + @const_name)""" % {
-344	        "tname": tname,
-345	        "colname": colname,
+- script: |
+    export PATH="$HOME/.local/bin:$PATH"
+    poetry run detect-secrets scan src test > .secrets.baseline
+    poetry run detect-secrets audit --baseline .secrets.baseline --fail-on-found
+  displayName: Scan for Secrets (src & test only)
