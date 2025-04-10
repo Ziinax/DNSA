@@ -196,48 +196,12 @@ line-ending = "lf"
 known-first-party = ["your_package_name"]
 combine-as-imports = true
 
-
-     Traceback (most recent call last):
-  File "path\lib\runpy.py", line 196, in _run_module_as_main
-    return _run_code(code, main_globals, None,
-  File "path0\lib\runpy.py", line 86, in _run_code
-    exec(code, run_globals)
-  File "path\Scripts\bandit.exe\__main__.py", line 7, in <module>
-  File "path\lib\site-packages\bandit\cli\main.py", line 677, in main
-    conf_level = constants.RANKING[args.confidence - 1]
-TypeError: unsupported operand type(s) for -: 'str' and 'int'
-
-# .bandit.yaml
-skips: []
-exclude_dirs:
-  - tests
-  - .venv
-  - venv
-  - env
-  - __pycache__
-
-# You can choose low, medium, or high
-severity: medium
-confidence: medium
-
-# Optional: include or exclude specific test IDs
-# include:
-#   - B101
-#   - B102
-# exclude:
-#   - B303  # Use of insecure MD5
-
-# Custom config if needed per test
-# For example, to ignore assert statements in production
-tests:
-  B101:  # assert used
-    skips: []
-
-# Use this to enforce file extensions
-file_extensions:
-  - .py
-
-# Format can be: txt, json, yaml, csv, html
-format: yaml
+  # Linting, upgrades, typing
+  - repo: https://github.com/astral-sh/ruff-pre-commit
+    rev: v0.11.4
+    hooks:
+      - id: ruff
+        args: ["src", "test"]
+        exclude: '__init__\.py$'
 
 
