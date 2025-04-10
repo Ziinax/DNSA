@@ -1,3 +1,10 @@
-Digest: sha256:62556500522072535cb3df2bb5965333dded9be47000473e9e0f84118e248642
-Status: Downloaded newer image for mcr.microsoft.com/mssql-tools:latest
-Sqlcmd: Error: Error occurred while opening or operating on file /init.sql (Reason: Error code 0x80070005).
+- script: |
+    chmod 644 $(Build.SourcesDirectory)/init.sql
+    docker run --rm \
+      --network sqlnet \
+      -v $(Build.SourcesDirectory)/init.sql:/init.sql \
+      mcr.microsoft.com/mssql-tools \
+      /bin/bash -c "/opt/mssql-tools/bin/sqlcmd -S sqltest -U sa -P ${DB_PASS} -i /init.sql"
+  displayName: Run init.sql against SQL Server
+  env:
+    DB_PASS: $(DB_PASS)
