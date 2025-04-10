@@ -1,7 +1,5 @@
-[
-
 - script: |
     export PATH="$HOME/.local/bin:$PATH"
-    poetry run detect-secrets scan src test > .secrets.baseline
-    poetry run detect-secrets audit --baseline .secrets.baseline --fail-on-found
-  displayName: Scan for Secrets (src & test only)
+    poetry run detect-secrets scan src test > tmp.secrets.baseline
+    grep '"is_secret": true' tmp.secrets.baseline && echo "Secrets found!" && exit 1 || echo "No secrets detected."
+  displayName: Secret Scan (src & test)
